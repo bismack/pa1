@@ -4,8 +4,6 @@
 
 using namespace std;
 
-#define NUM_THREADS     5
-
 void *PrintHello(void *threadid) {
    long tid;
    tid = (long)threadid;
@@ -14,11 +12,13 @@ void *PrintHello(void *threadid) {
 }
 
 int main () {
-   pthread_t threads[NUM_THREADS];
+   printf("------------------------\n");
+   int num_threads=8;
+   pthread_t threads[num_threads];
    int rc;
    int i;
 	
-   for( i=0; i < NUM_THREADS; i++ ){
+   for( i=0; i < num_threads; i++ ){
       cout << "main() : creating thread, " << i << endl;
       rc = pthread_create(&threads[i], NULL, PrintHello, (void *)i);
 		
