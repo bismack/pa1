@@ -59,7 +59,6 @@ bool verifyF(int propertyType, char c0, char c1, char c2, string segment) {
    return isSatisfied;
 }
 
-
 int main () {
 
    ofstream textFile;
