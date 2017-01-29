@@ -22,7 +22,7 @@ int stringLength = 0;
 struct INPUT {
    int F;
    int N;
-   double L;
+   int L;
    char c0, c1, c2;
 };    
 INPUT inSt;
@@ -32,6 +32,7 @@ void writeOutputFile() {
    ofstream textFile;
    textFile.open("out.txt");
    textFile << S << endl;
+   textFile << numOfSegmentsSatisfied << endl;
    textFile.close();
 }
 
@@ -41,14 +42,14 @@ void *checkSegmentProp(void *rank) {
    
    string strSeg = S.substr(start, inSt.L);
    
-   pthread_mutex_lock(&mutex);
-   printf("THREAD %i VERIFYING SEGMENT: %s\n", tid, strSeg.c_str());
+   // printf("THREAD %i VERIFYING SEGMENT: %s\n", tid, strSeg.c_str());
    if (verifyF(inSt.F, inSt.c0, inSt.c1, inSt.c2, strSeg) == true) {
+      pthread_mutex_lock(&mutex);
       numOfSegmentsSatisfied++;
-      printf("THREAD %i CONFIRMED SEGMENT %s SATISFIED PROPERTY %i\n", tid, strSeg.c_str(), inSt.F);
+      pthread_mutex_unlock(&mutex);
+      // printf("THREAD %i CONFIRMED SEGMENT %s SATISFIED PROPERTY %i\n", tid, strSeg.c_str(), inSt.F);
    }
    printf("-----THREAD: %i Substr: %s   Satisfied: %i\n", tid, strSeg.c_str(), numOfSegmentsSatisfied); 
-   pthread_mutex_unlock(&mutex);
 
    return NULL;
 }
@@ -57,8 +58,6 @@ void *constructS(void *rank){
    int tid = (intptr_t)rank;
    const char letter = alphabet[tid];
 
-   // put thread to sleep for a random (equally distributed) time from hardware
-   // http://stackoverflow.com/questions/7560114/random-number-c-in-some-range
    random_device rd;
    mt19937 eng(rd());
    uniform_int_distribution<> distr(100, 500);
@@ -68,7 +67,7 @@ void *constructS(void *rank){
    usleep(microsleep);
 
    pthread_mutex_lock(&mutex);
-   printf("MUTEX ACQUIRED BY THREAD: %i\n", tid);
+   // printf("MUTEX ACQUIRED BY THREAD: %i\n", tid);
    S += letter;
    stringLength++;
    printf("THREAD %i APPENDED LETTER: %c - SEGMENT S: %s %i \n", tid, letter, S.c_str(), stringLength);
@@ -83,8 +82,8 @@ int main(int argc, char* argv[]) {
 
    inSt.F = atoi(argv[1]);
    int N = atoi(argv[2]);
-   double L = (double)atoi(argv[3]);
-   double M = (double)atoi(argv[4]);
+   int L = atoi(argv[3]);
+   int M = atoi(argv[4]);
    inSt.c0 = argv[5][0];
    inSt.c1 = argv[6][0]; 
    inSt.c2 = argv[7][0];
@@ -94,7 +93,7 @@ int main(int argc, char* argv[]) {
    int segment = 1;
 
    while (segment <= M) {
-      printf("STRING LENGTH: %i\n", stringLength);
+      // printf("STRING LENGTH: %i\n", stringLength);
       for (int i=0; i < N; i++) {
          if (counter < L) {   
             pthread_create(&threads[i], NULL, constructS, (void *)(intptr_t)i);
@@ -114,21 +113,32 @@ int main(int argc, char* argv[]) {
    }
 
    printf("\n");
-   printf("String S CREATED: %s\n", S.c_str());
+   printf("---------------String S CREATED: %s\n", S.c_str());
    inSt.L = L;
    inSt.N = N;
 
-   while (counter < ((int)M/N)) {
+
+   while (counter < M/N) {
+      // printf("======== Counter: %i  M/N: %i  M%N: %i \n", counter, M/N, M%N);
 
       for (int i=0; i < N; i++){
          pthread_create(&threads[i], NULL, checkSegmentProp, (void *)(intptr_t)i);
       }
-
       for (int i=0; i < N; i++) {
          pthread_join(threads[i], NULL);
       }
+
       counter++;
+      if ((counter==M/N) && (M%N!=0)) {
+         for (int i=0; i < M%N; i++){
+            pthread_create(&threads[i], NULL, checkSegmentProp, (void *)(intptr_t)i);
+         }
+         for (int i=0; i < N; i++) {
+            pthread_join(threads[i], NULL);
+         }
+      }
    }
+   counter = 0;
 
    writeOutputFile();
    pthread_exit(NULL);
