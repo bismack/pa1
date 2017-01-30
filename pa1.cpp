@@ -44,12 +44,10 @@ void *checkSegmentProp(void *rank) {
    
    string strSeg = S.substr(start, inSt.L);
    
-   // printf("THREAD %i VERIFYING SEGMENT: %s\n", tid, strSeg.c_str());
    if (verifyF(inSt.F, inSt.c0, inSt.c1, inSt.c2, strSeg) == true) {
       pthread_mutex_lock(&mutex);
       numOfSegmentsSatisfied++;
       pthread_mutex_unlock(&mutex);
-      // printf("THREAD %i CONFIRMED SEGMENT %s SATISFIED PROPERTY %i\n", tid, strSeg.c_str(), inSt.F);
    }
    printf("-----THREAD: %i Substr: %s   Satisfied: %i\n", tid, strSeg.c_str(), numOfSegmentsSatisfied); 
 
@@ -65,11 +63,9 @@ void *constructS(void *rank){
    uniform_int_distribution<> distr(100, 500);
    unsigned int microsleep = distr(eng);
 
-   //printf("Thread %i - SLEEPING FOR: %ims\n", tid, microsleep);
    usleep(microsleep);
 
    pthread_mutex_lock(&mutex);
-   // printf("MUTEX ACQUIRED BY THREAD: %i\n", tid);
    S += letter;
    stringLength++;
    // printf("THREAD %i APPENDED LETTER: %c - SEGMENT S: %s %i \n", tid, letter, S.c_str(), stringLength);
@@ -83,7 +79,7 @@ char choose(int ranA, int ranB, int ranC) {
 
    switch (inSt.F) {
       case 0:
-      if ((S[stringLength]==NULL)&&(stringLength%inSt.L==0)) {
+      if ((S[stringLength]=='\0')&&(stringLength%inSt.L==0)) {
          choice=inSt.c2; occurOfC2++; 
       } else if (occurOfC0 + occurOfC1 < occurOfC2) {
          if (ranC==1) {
@@ -95,8 +91,8 @@ char choose(int ranA, int ranB, int ranC) {
          choice=inSt.c2; occurOfC2++;
       }
       break;
-   case 1:
-      if ((S[stringLength]==NULL)&&(stringLength%inSt.L==0)) {
+      case 1:
+      if ((S[stringLength]=='\0')&&(stringLength%inSt.L==0)) {
             choice=inSt.c1; occurOfC1++; 
       } else if (occurOfC0 + 2*occurOfC1 < occurOfC2) {
          if (occurOfC0 + 2*occurOfC1 < occurOfC2+1) {
@@ -108,21 +104,22 @@ char choose(int ranA, int ranB, int ranC) {
          choice=inSt.c2; occurOfC2++;
       }
       break;
-   case 2:
-      if ((S[stringLength]==NULL)&&(stringLength%inSt.L==0)) {
+      case 2:
+      if ((S[stringLength]=='\0')&&(stringLength%inSt.L==0)) {
             choice=inSt.c2; occurOfC2++; 
       } else if (occurOfC0 * occurOfC1 < occurOfC2) {
-         if (ranC==1) {
+         if ((occurOfC0+1) * occurOfC1 == occurOfC2) {
             choice=inSt.c0; occurOfC0++;
-      } else if (ranC==2) {
+      } else if ((occurOfC0 * (occurOfC1+1) == occurOfC2)
+         ||((occurOfC0+1) * (occurOfC1+1) == occurOfC2)) {
             choice=inSt.c1; occurOfC1++; }
       } else if (((occurOfC0 * occurOfC1 >= occurOfC2)&&(inSt.N<4))
       ||(occurOfC0 * occurOfC1 > occurOfC2)) {
          choice=inSt.c2; occurOfC2++;
       }
       break;
-   case 3:
-      if ((S[stringLength]==NULL)&&(stringLength%inSt.L==0)) {
+      case 3:
+      if ((S[stringLength]=='\0')&&(stringLength%inSt.L==0)) {
             choice=inSt.c1; occurOfC1++; 
       } else if (occurOfC0 - occurOfC1 < occurOfC2) {
          if (occurOfC0+1 - occurOfC1 < occurOfC2) {
@@ -136,7 +133,7 @@ char choose(int ranA, int ranB, int ranC) {
       break;
    }
 
-   if (choice==NULL) {
+   if (choice=='\0') {
       choice=alphabet[ranA-1];
    }
    return choice;
@@ -153,7 +150,6 @@ void *constructSE(void *rank){
 
    pthread_mutex_lock(&mutex);
    char letter = choose(distrA(eng),distrB(eng),distrC(eng));
-
    stringLength++;
    pthread_mutex_unlock(&mutex);
 
@@ -183,7 +179,6 @@ int main(int argc, char* argv[]) {
 
    int segment = 1;
    while (segment <= M) {
-      // printf("STRING LENGTH: %i\n", stringLength);
       for (int i=0; i < N; i++) {
          if (counter < L) {   
             pthread_create(&threads[i], NULL, constructS, (void *)(intptr_t)i);
@@ -207,8 +202,6 @@ int main(int argc, char* argv[]) {
    inSt.N = N;
 
    while (counter < M/N) {
-      // printf("======== Counter: %i  M/N: %i  M%N: %i \n", counter, M/N, M%N);
-
       for (int i=0; i < N; i++){
          pthread_create(&threads[i], NULL, checkSegmentProp, (void *)(intptr_t)i);
       }
@@ -257,8 +250,6 @@ int main(int argc, char* argv[]) {
 
    numOfSegmentsSatisfied = 0;
    while (counter < M/N) {
-      // printf("======== Counter: %i  M/N: %i  M%N: %i \n", counter, M/N, M%N);
-
       for (int i=0; i < N; i++){
          pthread_create(&threads[i], NULL, checkSegmentProp, (void *)(intptr_t)i);
       }
