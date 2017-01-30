@@ -137,7 +137,7 @@ char choose(int ranA, int ranB, int ranC) {
    }
 
    if (choice==NULL) {
-      choice=alphabet[ranA];
+      choice=alphabet[ranA-1];
    }
    return choice;
 }
