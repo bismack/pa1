@@ -1,6 +1,6 @@
 CC=g++
 CCFLAGS=-Wall
-OBJS= pa1.o verify.o
+OBJS= pa1.o verify.o valinput.o
 
 all: pa1.x 
 
@@ -10,6 +10,9 @@ pa1.x: $(OBJS) new
 
 pa1.o: pa1.cpp 
 	$(CC) $(CCFLAGS) -std=c++11 -c pa1.cpp -pthread
+
+valinput.o: valinput.cpp
+	$(CC) $(CCFLAGS) -std=c++11 -c valinput.cpp -pthread
 
 verify.o: verify.cpp
 	$(CC) $(CCFLAGS) -std=c++11 -c verify.cpp -pthread

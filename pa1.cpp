@@ -10,6 +10,7 @@
 #include <random>
 
 #include "verify.h"
+#include "valinput.h"
 
 using namespace std;
 
@@ -174,6 +175,11 @@ int main(int argc, char* argv[]) {
    inSt.c0 = argv[5][0];
    inSt.c1 = argv[6][0]; 
    inSt.c2 = argv[7][0];
+
+   if (!validateInput(inSt.F, N, L, M)){
+   	printf("Exiting program...\n");
+   	return 0;
+   }
 
    pthread_t threads[N];
 
